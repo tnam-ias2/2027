@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Menu de la semaine</title>
 <style>
   @font-face {
@@ -39,27 +39,32 @@
   .range { margin: 6px 0 0; color: var(--mut); font-size: 15px; font-weight: 400 }
   .tools { display: flex; align-items: center; gap: 14px; margin-top: 22px; flex-wrap: wrap }
   .upload {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    height: 34px;
-    padding: 0 12px;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 14px;
     border: 1px solid #d5d5d2;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #fff;
     color: var(--ink);
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 500;
     cursor: pointer;
+    touch-action: manipulation;
   }
   .upload:hover { border-color: #1a1a1a }
   .upload.busy { opacity: .45; pointer-events: none }
   .upload input {
     position: absolute;
-    width: 1px; height: 1px;
-    margin: -1px; padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    border: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    font-size: 16px;
+    cursor: pointer;
   }
   .hint { margin: 0; color: var(--mut); font-size: 13px; font-weight: 400 }
   .hint.err { color: #8d3b3b }
@@ -176,11 +181,128 @@
   }
   .suggest button[aria-selected="true"],
   .suggest button:hover { background: var(--soft) }
-  @media (max-width: 520px) {
-    .wrap { padding: 36px 18px 72px }
+  .suggest { max-height: 220px; overflow: auto }
+  .review {
+    margin-top: 18px;
+    padding: 16px 16px 8px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .review[hidden] { display: none }
+  .review h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--mut);
+  }
+  .lead { margin: 6px 0 14px; color: var(--ink); font-size: 15px }
+  .lead.err { color: #8d3b3b }
+  .preview {
+    display: block;
+    max-width: 100%;
+    max-height: 200px;
+    width: auto;
+    height: auto;
+    margin: 0 auto 12px;
+    border-radius: 8px;
+  }
+  .reads { margin: 0; padding: 0; list-style: none }
+  .read {
+    display: grid;
+    grid-template-columns: minmax(108px, 34%) 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .read span {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--mut);
+  }
+  .read input {
+    width: 100%;
+    border: 0;
+    padding: 8px 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 16px;
+    outline: none;
+  }
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .charger, .relire {
+    min-height: 48px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .charger {
+    border: 0;
+    background: #1a1a1a;
+    color: #fff;
+  }
+  .charger:disabled { opacity: .35; cursor: default }
+  .action-note { margin: -2px 0 2px; text-align: center; color: var(--mut); font-size: 13px }
+  .relire {
+    border: 1px solid #d5d5d2;
+    background: #fff;
+    color: var(--ink);
+  }
+  .relire:disabled { opacity: .45 }
+  .transcript { margin: 8px 0 4px; }
+  .transcript summary {
+    cursor: pointer;
+    color: var(--mut);
+    font-size: 14px;
+    padding: 8px 0;
+  }
+  .transcript pre {
+    margin: 0 0 8px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  @media (max-width: 640px) {
+    body { font-size: 16px }
+    .wrap { padding: 28px 16px calc(24px + env(safe-area-inset-bottom)) }
     h1 { font-size: 28px }
-    input[type="text"] { font-size: 17px }
-    .meal { grid-template-columns: 48px 1fr }
+    .tools { align-items: stretch }
+    .upload { width: 100%; font-size: 16px }
+    .hint { font-size: 14px }
+    .week { margin: 22px 0 28px }
+    .week li { font-size: 10px; letter-spacing: .02em; padding: 10px 0 }
+    .week b { font-size: 15px }
+    .day { margin-bottom: 22px }
+    .meal { grid-template-columns: 48px 1fr; padding: 14px 0 }
+    input[type="text"] { font-size: 16px }
+    .read { grid-template-columns: 1fr; gap: 0; padding: 8px 0 4px }
+    .read input { padding: 6px 0 10px; font-size: 16px }
+    .actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 4;
+      margin: 12px -16px 0;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      background: #fff;
+      border-top: 1px solid var(--line);
+    }
+    .charger { min-height: 52px; font-size: 17px }
   }
 </style>
 </head>
@@ -195,6 +317,21 @@
     </label>
     <p class="hint" id="status">Photo d’un menu écrit ou d’un plat.</p>
   </div>
+  <section class="review" id="review" hidden>
+    <h2>Lecture</h2>
+    <p class="lead" id="review-lead">Choisis une image pour la lire.</p>
+    <img class="preview" id="preview" alt="Image importée" hidden>
+    <ul class="reads" id="reads"></ul>
+    <div class="actions">
+      <button type="button" class="charger" id="charger" disabled>Charger</button>
+      <p class="action-note">Valider la mise en place dans le menu</p>
+      <button type="button" class="relire" id="relire" disabled>Relire</button>
+    </div>
+    <details class="transcript" id="transcript">
+      <summary>Texte lu</summary>
+      <pre id="raw"></pre>
+    </details>
+  </section>
   <ol class="week" id="week"></ol>
   <div id="days"></div>
 </div>
@@ -222,15 +359,47 @@ const rangeEl = document.getElementById("range");
 const fileInput = document.getElementById("file");
 const upload = document.getElementById("upload");
 const statusEl = document.getElementById("status");
+const reviewEl = document.getElementById("review");
+const reviewLead = document.getElementById("review-lead");
+const previewEl = document.getElementById("preview");
+const readsEl = document.getElementById("reads");
+const chargerBtn = document.getElementById("charger");
+const relireBtn = document.getElementById("relire");
+const rawEl = document.getElementById("raw");
+const transcriptEl = document.getElementById("transcript");
 
 let state = loadState();
 let openInput = null;
 let activeIndex = -1;
 let weekStart = null;
 let scanning = false;
+let currentFile = null;
+let previewUrl = "";
+let workerPromise = null;
+
+const DAY_RE = /^(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|lun|mar|mer|jeu|ven|sam|dim)\b\.?/i;
+const SLOT_RE = /^(?:midi|soir|d[ée]jeuner|d[îi]ner|lunch|dinner)\b\.?/i;
+const DAYS = {
+  lundi: "lundi", lun: "lundi",
+  mardi: "mardi", mar: "mardi",
+  mercredi: "mercredi", mer: "mercredi",
+  jeudi: "jeudi", jeu: "jeudi",
+  vendredi: "vendredi", ven: "vendredi",
+  samedi: "samedi", sam: "samedi",
+  dimanche: "dimanche", dim: "dimanche",
+};
+const SLOTS = {
+  midi: "midi", dejeuner: "midi", lunch: "midi",
+  soir: "soir", diner: "soir", dinner: "soir",
+};
+const SKIP_LINES = new Set(["menu", "menu de la semaine", "a table", "repas", "semaine"]);
 
 function norm(s) {
-  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+  return fold(s).trim();
+}
+
+function fold(s) {
+  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
 function iso(d) {
@@ -461,51 +630,250 @@ function slotLabel(key) {
   return `${name} ${slot}`;
 }
 
-function applyScan(data) {
+function tidy(s) {
+  s = s.replace(/\s+/g, " ").replace(/^[\s:;\-–—•|,]+|[\s:;\-–—•|,]+$/g, "");
+  if (!s) return "";
+  if (s === s.toUpperCase() || s === s.toLowerCase()) {
+    s = s.toLowerCase();
+    s = s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  return s;
+}
+
+function take(re, text) {
+  const m = re.exec(text);
+  if (!m) return [null, text];
+  const word = fold(m[0]).replace(/[.\s]/g, "");
+  const rest = text.slice(m[0].length).replace(/^[\s.:;\-–—•]+/, "");
+  return [word, rest];
+}
+
+function parseMenu(text) {
+  let currentDay = null;
+  let currentSlot = null;
+  const found = {};
+  const order = [];
+  const loose = [];
+  function add(day, slot, dish) {
+    const piece = tidy(dish);
+    if (!day || !slot || piece.length < 2) return;
+    const key = day + "|" + slot;
+    if (found[key]) {
+      if (!fold(found[key].dish).includes(fold(piece))) found[key].dish += ", " + piece;
+    } else {
+      found[key] = { day, slot, dish: piece };
+      order.push(found[key]);
+    }
+  }
+  for (const raw of text.split(/\n/)) {
+    const line = raw.trim();
+    if (!line || /^\d{1,2}$/.test(line) || SKIP_LINES.has(fold(line))) continue;
+    let rest = line;
+    let dayWord;
+    [dayWord, rest] = take(DAY_RE, rest);
+    if (dayWord) rest = rest.replace(/^\d{1,2}\b\s*/, "");
+    let slotWord;
+    [slotWord, rest] = take(SLOT_RE, rest);
+    const day = dayWord ? DAYS[dayWord] : null;
+    const slot = slotWord ? SLOTS[slotWord] : null;
+    if (day) {
+      currentDay = day;
+      if (!slot) currentSlot = null;
+    }
+    if (slot) currentSlot = slot;
+    if (day || slot) {
+      if (rest) add(currentDay, currentSlot, rest);
+      continue;
+    }
+    if (currentDay && currentSlot) add(currentDay, currentSlot, line);
+    else loose.push(line);
+  }
+  return [order, loose];
+}
+
+function interpret(lines) {
+  const raw = lines.join("\n").trim();
+  const [meals, loose] = parseMenu(raw);
+  if (meals.length) return { meals, dish: null, raw };
+  const bits = loose.map(tidy).filter(b => b && (b.match(/[A-Za-zÀ-ÿ]/g) || []).length >= 3);
+  if (!bits.length) return { meals: [], dish: null, raw };
+  let dish = bits.length === 1 ? bits[0] : bits.join(", ");
+  if (dish.length > 140) dish = dish.slice(0, 140).replace(/\s+\S*$/, "");
+  return { meals: [], dish, raw };
+}
+
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Impossible de charger la lecture d’image."));
+    document.head.append(s);
+  });
+}
+
+function getWorker() {
+  if (!workerPromise) {
+    workerPromise = loadTesseract().then(() => Tesseract.createWorker("fra", 1, {
+      logger(m) {
+        if (m.status === "recognizing text" && typeof m.progress === "number") {
+          reviewLead.textContent = "Lecture de l’image… " + Math.round(m.progress * 100) + " %";
+        }
+      },
+    }));
+  }
+  return workerPromise;
+}
+
+function prepareImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const max = 1600;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Impossible de lire cette image."));
+    };
+    img.src = url;
+  });
+}
+
+async function recognize(file) {
+  const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if (local) {
+    try {
+      const r = await fetch("/api/menu-scan", {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: await file.arrayBuffer(),
+      });
+      if (r.ok) return await r.json();
+    } catch { /* lecture dans le navigateur */ }
+  }
+  reviewLead.textContent = "Préparation de la lecture…";
+  const canvas = await prepareImage(file);
+  const worker = await getWorker();
+  const { data } = await worker.recognize(canvas);
+  return interpret(String(data.text || "").split(/\n/));
+}
+
+function openReview(file) {
+  reviewEl.hidden = false;
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = URL.createObjectURL(file);
+  previewEl.src = previewUrl;
+  previewEl.hidden = false;
+  reviewEl.scrollIntoView({ block: "start", behavior: "smooth" });
+}
+
+function fillReview(data) {
+  readsEl.replaceChildren();
   const meals = Array.isArray(data.meals) ? data.meals : [];
-  let first = null;
   if (meals.length) {
     for (const m of meals) {
-      const index = DAY_INDEX[m.day];
-      if (index == null || (m.slot !== "midi" && m.slot !== "soir") || !m.dish) continue;
-      const key = `${iso(addDays(weekStart, index))}|${m.slot}`;
-      const input = setSlot(key, m.dish);
-      if (!first) first = input;
+      if (!DAYS[m.day] && !DAY_INDEX[m.day]) continue;
+      if (m.slot !== "midi" && m.slot !== "soir") continue;
+      const li = document.createElement("li");
+      li.className = "read";
+      const span = document.createElement("span");
+      span.textContent = m.day + " " + m.slot;
+      const input = document.createElement("input");
+      input.value = m.dish || "";
+      input.dataset.day = m.day;
+      input.dataset.slot = m.slot;
+      input.setAttribute("aria-label", span.textContent);
+      li.append(span, input);
+      readsEl.append(li);
     }
-    const n = meals.length;
-    statusEl.textContent = n > 1 ? `${n} repas mis à jour.` : "1 repas mis à jour.";
   } else if (data.dish) {
     const key = targetKey();
-    first = setSlot(key, data.dish);
-    statusEl.textContent = `Ajouté · ${slotLabel(key)}.`;
-  } else {
-    statusEl.textContent = "Aucun plat reconnu dans cette image.";
-    return;
+    const li = document.createElement("li");
+    li.className = "read";
+    const span = document.createElement("span");
+    span.textContent = slotLabel(key);
+    const input = document.createElement("input");
+    input.value = data.dish;
+    input.dataset.key = key;
+    input.setAttribute("aria-label", "Plat pour " + span.textContent);
+    li.append(span, input);
+    readsEl.append(li);
   }
+  rawEl.textContent = data.raw || "Aucun texte détecté.";
+  transcriptEl.open = true;
+  const hasDish = [...readsEl.querySelectorAll("input")].some(i => i.value.trim());
+  chargerBtn.disabled = !hasDish;
+  reviewLead.classList.toggle("err", !hasDish);
+  reviewLead.textContent = hasDish
+    ? "Relis le texte, puis charge pour le placer dans le menu."
+    : "Aucun plat reconnu. Relis l’image, ou réessaie avec une photo plus nette.";
+  statusEl.classList.remove("err");
+  statusEl.textContent = hasDish ? "Lecture prête. Appuie sur Charger." : "Aucun plat reconnu.";
+}
+
+function charger() {
+  const inputs = [...readsEl.querySelectorAll("input")];
+  let first = null;
+  let n = 0;
+  for (const input of inputs) {
+    const dish = input.value.trim();
+    if (!dish) continue;
+    let key = input.dataset.key;
+    if (!key) {
+      const index = DAY_INDEX[input.dataset.day];
+      if (index == null) continue;
+      key = `${iso(addDays(weekStart, index))}|${input.dataset.slot}`;
+    }
+    const field = setSlot(key, dish);
+    if (!first) first = field;
+    n++;
+  }
+  if (!n) return;
+  reviewLead.classList.remove("err");
+  reviewLead.textContent = n > 1 ? `${n} repas placés dans le menu.` : "1 repas placé dans le menu.";
+  statusEl.textContent = "Menu mis à jour.";
   if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
 async function scanFile(file) {
   if (scanning || !file) return;
+  currentFile = file;
   scanning = true;
   upload.classList.add("busy");
+  chargerBtn.disabled = true;
+  relireBtn.disabled = true;
   statusEl.classList.remove("err");
+  reviewLead.classList.remove("err");
   statusEl.textContent = "Lecture de l’image…";
+  openReview(file);
+  reviewLead.textContent = "Lecture de l’image…";
+  readsEl.replaceChildren();
+  rawEl.textContent = "";
   try {
-    const r = await fetch("/api/menu-scan", {
-      method: "POST",
-      headers: { "Content-Type": file.type || "application/octet-stream" },
-      body: await file.arrayBuffer(),
-    });
-    const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data.error || "Impossible de lire cette image.");
-    applyScan(data);
+    const data = await recognize(file);
+    fillReview(data);
   } catch (e) {
+    reviewLead.classList.add("err");
+    reviewLead.textContent = e.message || "Impossible de lire cette image.";
     statusEl.classList.add("err");
-    statusEl.textContent = e.message || "Impossible de lire cette image.";
+    statusEl.textContent = reviewLead.textContent;
+    chargerBtn.disabled = true;
   } finally {
     scanning = false;
     upload.classList.remove("busy");
+    relireBtn.disabled = !currentFile;
   }
 }
 
@@ -592,6 +960,8 @@ fileInput.addEventListener("change", () => {
   fileInput.value = "";
   scanFile(file);
 });
+chargerBtn.addEventListener("click", charger);
+relireBtn.addEventListener("click", () => scanFile(currentFile));
 
 document.addEventListener("dragover", e => {
   if ([...e.dataTransfer.items].some(i => i.kind === "file")) e.preventDefault();
