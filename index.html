@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menu de la semaine</title>
+<style>
+  @font-face {
+    font-family: Outfit;
+    src: url("fonts/Outfit.ttf") format("truetype");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  :root {
+    --bg: #f6f6f5;
+    --ink: #1a1a1a;
+    --mut: #8a8a8a;
+    --line: #e6e6e4;
+    --soft: #f1f1ef;
+  }
+  * { box-sizing: border-box }
+  ::selection { background: #e4e4e1 }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font: 16px/1.45 Outfit, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 56px 24px 88px }
+  h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 500;
+    letter-spacing: -.04em;
+  }
+  .range { margin: 6px 0 0; color: var(--mut); font-size: 15px; font-weight: 400 }
+  .tools { display: flex; align-items: center; gap: 14px; margin-top: 22px; flex-wrap: wrap }
+  .upload {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid #d5d5d2;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .upload:hover { border-color: #1a1a1a }
+  .upload.busy { opacity: .45; pointer-events: none }
+  .upload input {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    border: 0;
+  }
+  .hint { margin: 0; color: var(--mut); font-size: 13px; font-weight: 400 }
+  .hint.err { color: #8d3b3b }
+  .week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    margin: 32px 0 36px;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .week li {
+    text-align: center;
+    padding: 12px 0 11px;
+    color: var(--mut);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .week b {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+  }
+  .week .today { color: var(--ink) }
+  .week .today b { box-shadow: inset 0 -1px 0 var(--ink) }
+  .day { margin: 0 0 30px }
+  .day h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--mut);
+  }
+  .today-tag {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink);
+  }
+  .meal {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 8px 14px;
+    align-items: start;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .meal.fresh { background: var(--soft) }
+  .when {
+    margin-top: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .field { position: relative; min-width: 0 }
+  input[type="text"] {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: -.02em;
+    outline: none;
+  }
+  input[type="text"]::placeholder { color: #b7b7b4; font-weight: 400 }
+  .suggest {
+    position: absolute;
+    z-index: 5;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    margin: 0;
+    padding: 4px;
+    list-style: none;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .05);
+  }
+  .suggest[hidden] { display: none }
+  .suggest.up { top: auto; bottom: calc(100% + 6px) }
+  .suggest button {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .suggest button[aria-selected="true"],
+  .suggest button:hover { background: var(--soft) }
+  @media (max-width: 520px) {
+    .wrap { padding: 36px 18px 72px }
+    h1 { font-size: 28px }
+    input[type="text"] { font-size: 17px }
+    .meal { grid-template-columns: 48px 1fr }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Menu de la semaine</h1>
+  <p class="range" id="range"></p>
+  <div class="tools">
+    <label class="upload" id="upload">
+      <input id="file" type="file" accept="image/*">
+      Importer une image
+    </label>
+    <p class="hint" id="status">Photo d’un menu écrit ou d’un plat.</p>
+  </div>
+  <ol class="week" id="week"></ol>
+  <div id="days"></div>
+</div>
+<script>
+const KEY = "menu-semaine-v1";
+const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+const COURTS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+const MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+const CRENEAUX = ["midi", "soir"];
+const DAY_INDEX = { lundi: 0, mardi: 1, mercredi: 2, jeudi: 3, vendredi: 4, samedi: 5, dimanche: 6 };
+const CATALOG = [
+  "Côte de porc / riz",
+  "Soupe, boulettes, chou-fleur",
+  "Frites nuggets",
+];
+const DEFAULTS = {
+  "2026-11-20|soir": "Côte de porc / riz",
+  "2026-11-21|midi": "Soupe, boulettes, chou-fleur",
+  "2026-11-21|soir": "Frites nuggets",
+};
+
+const weekEl = document.getElementById("week");
+const daysEl = document.getElementById("days");
+const rangeEl = document.getElementById("range");
+const fileInput = document.getElementById("file");
+const upload = document.getElementById("upload");
+const statusEl = document.getElementById("status");
+
+let state = loadState();
+let openInput = null;
+let activeIndex = -1;
+let weekStart = null;
+let scanning = false;
+
+function norm(s) {
+  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+}
+
+function iso(d) {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function mondayOf(date) {
+  const x = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diff = x.getDay() === 0 ? -6 : 1 - x.getDay();
+  x.setDate(x.getDate() + diff);
+  return x;
+}
+
+function addDays(date, n) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + n);
+}
+
+function rangeLabel(start, end) {
+  const y = start.getFullYear();
+  if (start.getMonth() === end.getMonth() && y === end.getFullYear()) {
+    return `${start.getDate()} – ${end.getDate()} ${MOIS[start.getMonth()]} ${y}`;
+  }
+  if (y === end.getFullYear()) {
+    return `${start.getDate()} ${MOIS[start.getMonth()]} – ${end.getDate()} ${MOIS[end.getMonth()]} ${y}`;
+  }
+  return `${start.getDate()} ${MOIS[start.getMonth()]} ${y} – ${end.getDate()} ${MOIS[end.getMonth()]} ${end.getFullYear()}`;
+}
+
+function domId(key) {
+  return "plat-" + key.replace("|", "-");
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return { slots: { ...DEFAULTS }, extra: [] };
+    const data = JSON.parse(raw);
+    return {
+      slots: data.slots && typeof data.slots === "object" ? data.slots : {},
+      extra: Array.isArray(data.extra) ? data.extra.filter(s => typeof s === "string") : [],
+    };
+  } catch {
+    return { slots: { ...DEFAULTS }, extra: [] };
+  }
+}
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+function allPlats() {
+  const out = [];
+  const seen = new Set();
+  for (const s of [...CATALOG, ...state.extra, ...Object.values(state.slots)]) {
+    const v = (s || "").trim();
+    if (!v) continue;
+    const k = norm(v);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(v);
+  }
+  return out;
+}
+
+function remember(value) {
+  const v = (value || "").trim();
+  if (!v) return;
+  const known = new Set(allPlats().map(norm));
+  if (!known.has(norm(v))) state.extra.push(v);
+}
+
+function matches(query) {
+  const q = norm(query);
+  if (!q) return [];
+  return allPlats()
+    .filter(s => {
+      const n = norm(s);
+      return n.includes(q) && n !== q;
+    })
+    .sort((a, b) => {
+      const as = norm(a).startsWith(q) ? 0 : 1;
+      const bs = norm(b).startsWith(q) ? 0 : 1;
+      if (as !== bs) return as - bs;
+      return a.localeCompare(b, "fr");
+    });
+}
+
+function closeSuggest() {
+  if (!openInput) return;
+  const list = openInput.parentElement.querySelector(".suggest");
+  list.hidden = true;
+  list.replaceChildren();
+  openInput.setAttribute("aria-expanded", "false");
+  openInput.removeAttribute("aria-activedescendant");
+  openInput = null;
+  activeIndex = -1;
+}
+
+function place(list, input) {
+  list.classList.remove("up");
+  const rect = input.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  if (spaceBelow < list.offsetHeight + 12 && rect.top > list.offsetHeight + 12) {
+    list.classList.add("up");
+  }
+}
+
+function renderSuggest(input) {
+  const list = input.parentElement.querySelector(".suggest");
+  const items = matches(input.value);
+  if (!items.length) {
+    closeSuggest();
+    return;
+  }
+  openInput = input;
+  if (activeIndex >= items.length) activeIndex = items.length - 1;
+  list.replaceChildren();
+  items.forEach((plat, i) => {
+    const li = document.createElement("li");
+    li.setAttribute("role", "presentation");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = `${input.id}-opt-${i}`;
+    btn.setAttribute("role", "option");
+    btn.setAttribute("aria-selected", i === activeIndex ? "true" : "false");
+    btn.textContent = plat;
+    btn.addEventListener("mousedown", e => e.preventDefault());
+    btn.addEventListener("mouseenter", () => {
+      activeIndex = i;
+      paintActive(list, input);
+    });
+    btn.addEventListener("click", () => choose(input, plat));
+    li.append(btn);
+    list.append(li);
+  });
+  list.hidden = false;
+  input.setAttribute("aria-expanded", "true");
+  place(list, input);
+  paintActive(list, input);
+}
+
+function paintActive(list, input) {
+  const buttons = [...list.querySelectorAll("button")];
+  buttons.forEach((btn, i) => btn.setAttribute("aria-selected", i === activeIndex ? "true" : "false"));
+  const current = buttons[activeIndex];
+  if (current) input.setAttribute("aria-activedescendant", current.id);
+  else input.removeAttribute("aria-activedescendant");
+}
+
+function choose(input, plat) {
+  input.value = plat;
+  state.slots[input.dataset.key] = plat;
+  save();
+  closeSuggest();
+  input.focus();
+}
+
+function onInput(input) {
+  state.slots[input.dataset.key] = input.value;
+  save();
+  activeIndex = -1;
+  renderSuggest(input);
+}
+
+function onKey(e) {
+  const input = e.currentTarget;
+  const list = input.parentElement.querySelector(".suggest");
+  const open = openInput === input && !list.hidden;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const items = matches(input.value);
+    if (!items.length) return;
+    if (!open) renderSuggest(input);
+    e.preventDefault();
+    const count = items.length;
+    if (e.key === "ArrowDown") activeIndex = activeIndex < 0 ? 0 : (activeIndex + 1) % count;
+    else activeIndex = activeIndex < 0 ? count - 1 : (activeIndex - 1 + count) % count;
+    renderSuggest(input);
+  } else if (e.key === "Enter" && open && activeIndex >= 0) {
+    e.preventDefault();
+    const plat = matches(input.value)[activeIndex];
+    if (plat) choose(input, plat);
+  } else if (e.key === "Escape" && open) {
+    e.preventDefault();
+    closeSuggest();
+  }
+}
+
+function setSlot(key, dish) {
+  const v = dish.trim();
+  if (!v) return null;
+  const prev = state.slots[key] || "";
+  state.slots[key] = v;
+  remember(prev);
+  remember(v);
+  const input = document.getElementById(domId(key));
+  if (input) {
+    input.value = v;
+    const meal = input.closest(".meal");
+    meal.classList.add("fresh");
+    setTimeout(() => meal.classList.remove("fresh"), 1400);
+  }
+  save();
+  return input;
+}
+
+function targetKey() {
+  const active = document.activeElement;
+  if (active && active.dataset && active.dataset.key) return active.dataset.key;
+  const today = iso(new Date());
+  const keys = [];
+  for (let i = 0; i < 7; i++) {
+    const date = iso(addDays(weekStart, i));
+    for (const c of CRENEAUX) keys.push(`${date}|${c}`);
+  }
+  const preferred = [`${today}|midi`, `${today}|soir`, ...keys];
+  for (const k of preferred) {
+    if (!(state.slots[k] || "").trim()) return k;
+  }
+  return `${today}|soir`;
+}
+
+function slotLabel(key) {
+  const [date, slot] = key.split("|");
+  const d = new Date(date + "T12:00:00");
+  const name = JOURS[(d.getDay() + 6) % 7].toLowerCase();
+  return `${name} ${slot}`;
+}
+
+function applyScan(data) {
+  const meals = Array.isArray(data.meals) ? data.meals : [];
+  let first = null;
+  if (meals.length) {
+    for (const m of meals) {
+      const index = DAY_INDEX[m.day];
+      if (index == null || (m.slot !== "midi" && m.slot !== "soir") || !m.dish) continue;
+      const key = `${iso(addDays(weekStart, index))}|${m.slot}`;
+      const input = setSlot(key, m.dish);
+      if (!first) first = input;
+    }
+    const n = meals.length;
+    statusEl.textContent = n > 1 ? `${n} repas mis à jour.` : "1 repas mis à jour.";
+  } else if (data.dish) {
+    const key = targetKey();
+    first = setSlot(key, data.dish);
+    statusEl.textContent = `Ajouté · ${slotLabel(key)}.`;
+  } else {
+    statusEl.textContent = "Aucun plat reconnu dans cette image.";
+    return;
+  }
+  if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+async function scanFile(file) {
+  if (scanning || !file) return;
+  scanning = true;
+  upload.classList.add("busy");
+  statusEl.classList.remove("err");
+  statusEl.textContent = "Lecture de l’image…";
+  try {
+    const r = await fetch("/api/menu-scan", {
+      method: "POST",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: await file.arrayBuffer(),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || "Impossible de lire cette image.");
+    applyScan(data);
+  } catch (e) {
+    statusEl.classList.add("err");
+    statusEl.textContent = e.message || "Impossible de lire cette image.";
+  } finally {
+    scanning = false;
+    upload.classList.remove("busy");
+  }
+}
+
+function build() {
+  const today = new Date();
+  const todayIso = iso(today);
+  weekStart = mondayOf(today);
+  const end = addDays(weekStart, 6);
+  rangeEl.textContent = rangeLabel(weekStart, end);
+
+  for (let i = 0; i < 7; i++) {
+    const date = addDays(weekStart, i);
+    const dateIso = iso(date);
+    const li = document.createElement("li");
+    li.dataset.date = dateIso;
+    if (dateIso === todayIso) li.classList.add("today");
+    li.append(COURTS[i]);
+    const b = document.createElement("b");
+    b.textContent = String(date.getDate());
+    li.append(b);
+    weekEl.append(li);
+
+    const section = document.createElement("section");
+    section.className = "day";
+    const h2 = document.createElement("h2");
+    h2.textContent = `${JOURS[i]} ${date.getDate()}`;
+    if (dateIso === todayIso) {
+      const tag = document.createElement("span");
+      tag.className = "today-tag";
+      tag.textContent = "Aujourd’hui";
+      h2.append(tag);
+    }
+    section.append(h2);
+
+    for (const creneau of CRENEAUX) {
+      const key = `${dateIso}|${creneau}`;
+      const meal = document.createElement("div");
+      meal.className = "meal";
+      const when = document.createElement("div");
+      when.className = "when";
+      when.id = `when-${domId(key)}`;
+      when.textContent = creneau;
+      const field = document.createElement("div");
+      field.className = "field";
+      const input = document.createElement("input");
+      input.id = domId(key);
+      input.type = "text";
+      input.placeholder = "Ajouter un plat";
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.setAttribute("role", "combobox");
+      input.setAttribute("aria-autocomplete", "list");
+      input.setAttribute("aria-expanded", "false");
+      input.setAttribute("aria-labelledby", when.id);
+      input.setAttribute("aria-controls", `list-${domId(key)}`);
+      input.dataset.key = key;
+      input.value = state.slots[key] || "";
+      const list = document.createElement("ul");
+      list.className = "suggest";
+      list.id = `list-${domId(key)}`;
+      list.setAttribute("role", "listbox");
+      list.hidden = true;
+      input.addEventListener("focus", () => {
+        input.dataset.prev = state.slots[key] || "";
+      });
+      input.addEventListener("input", () => onInput(input));
+      input.addEventListener("keydown", onKey);
+      input.addEventListener("blur", () => {
+        remember(input.dataset.prev || "");
+        remember(input.value);
+        save();
+        closeSuggest();
+      });
+      field.append(input, list);
+      meal.append(when, field);
+      section.append(meal);
+    }
+    daysEl.append(section);
+  }
+}
+
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files && fileInput.files[0];
+  fileInput.value = "";
+  scanFile(file);
+});
+
+document.addEventListener("dragover", e => {
+  if ([...e.dataTransfer.items].some(i => i.kind === "file")) e.preventDefault();
+});
+document.addEventListener("drop", e => {
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith("image/")) return;
+  e.preventDefault();
+  scanFile(file);
+});
+document.addEventListener("mousedown", e => {
+  if (!openInput) return;
+  if (e.target.closest(".field") === openInput.parentElement) return;
+  closeSuggest();
+});
+window.addEventListener("resize", closeSuggest);
+
+build();
+</script>
+</body>
+</html>
